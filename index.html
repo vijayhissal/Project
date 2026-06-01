@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>To-Do List</title>
+    <style>
+        :root {
+            --bg: #0b1220;
+            --card: #111a2e;
+            --text: #e8eefc;
+            --muted: #a8b3d6;
+            --primary: #6ea8fe;
+            --primary2: #8b5cf6;
+            --danger: #fb7185;
+            --ok: #34d399;
+            --border: rgba(255, 255, 255, .12);
+            --shadow: 0 10px 30px rgba(0, 0, 0, .35);
+            --radius: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+            background: radial-gradient(1200px 800px at 20% 10%, rgba(110, 168, 254, .25), transparent 55%),
+                radial-gradient(900px 700px at 90% 20%, rgba(139, 92, 246, .22), transparent 45%),
+                var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .app {
+            width: min(720px, 100%);
+            background: rgba(17, 26, 46, .75);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            border-radius: var(--radius);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        header {
+            padding: 20px 20px 12px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            justify-content: space-between;
+        }
+
+        .title {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 18px;
+            letter-spacing: .2px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            margin: 0;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .stats {
+            text-align: right;
+            font-size: 12px;
+            color: var(--muted);
+            line-height: 1.4;
+            padding-top: 2px;
+            white-space: nowrap;
+        }
+
+        main {
+            padding: 18px 20px 20px;
+        }
+
+        .add {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .input {
+            flex: 1;
+            background: rgba(255, 255, 255, .04);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 12px 14px;
+            border-radius: 12px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .input::placeholder {
+            color: rgba(168, 179, 214, .7)
+        }
+
+        .btn {
+            border: 1px solid var(--border);
+            background: linear-gradient(135deg, rgba(110, 168, 254, .95), rgba(139, 92, 246, .95));
+            color: white;
+            padding: 12px 14px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform .05s ease, filter .15s ease;
+            user-select: none;
+            white-space: nowrap;
+        }
+
+        .btn:active {
+            transform: translateY(1px)
+        }
+
+        .btn:hover {
+            filter: brightness(1.05)
+        }
+
+        .toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin: 8px 0 12px;
+            flex-wrap: wrap;
+        }
+
+        .filters {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .chip {
+            padding: 8px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            font-size: 12px;
+            cursor: pointer;
+            user-select: none;
+            transition: background .15s ease, color .15s ease, border-color .15s ease;
+        }
+
+        .chip[aria-pressed="true"] {
+            background: rgba(110, 168, 254, .18);
+            border-color: rgba(110, 168, 254, .6);
+            color: #dbeafe;
+        }
+
+        .danger-link {
+            background: rgba(251, 113, 133, .12);
+            border-color: rgba(251, 113, 133, .35);
+            color: #ffd1dc;
+        }
+
+        .list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .item {
+            display: grid;
+            grid-template-columns: 28px 1fr auto;
+            gap: 12px;
+            align-items: center;
+            padding: 12px 12px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, .03);
+        }
+
+        .check {
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, .03);
+            display: grid;
+            place-items: center;
+            cursor: pointer;
+            transition: background .15s ease, border-color .15s ease;
+            user-select: none;
+        }
+
+        .check[data-done="true"] {
+            background: rgba(52, 211, 153, .14);
+            border-color: rgba(52, 211, 153, .55);
+        }
+
+        .check svg {
+            opacity: .0;
+            transition: opacity .12s ease;
+        }
+
+        .check[data-done="true"] svg {
+            opacity: 1
+        }
+
+        .text {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .task {
+            font-size: 14px;
+            font-weight: 650;
+            word-break: break-word;
+        }
+
+        .task.done {
+            text-decoration: line-through;
+            color: rgba(232, 238, 252, .6);
+            font-weight: 600;
+        }
+
+        .meta {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+            transition: transform .05s ease, filter .15s ease, border-color .15s ease;
+            user-select: none;
+        }
+
+        .icon-btn:hover {
+            filter: brightness(1.08)
+        }
+
+        .icon-btn:active {
+            transform: translateY(1px)
+        }
+
+        .icon-btn.delete {
+            border-color: rgba(251, 113, 133, .35);
+            color: #ffd1dc;
+            background: rgba(251, 113, 133, .08);
+        }
+
+        .empty {
+            padding: 28px 10px;
+            text-align: center;
+            color: var(--muted);
+            border: 1px dashed rgba(255, 255, 255, .18);
+            border-radius: 14px;
+            background: rgba(255, 255, 255, .02);
+        }
+
+        footer {
+            padding: 14px 20px 18px;
+            border-top: 1px solid var(--border);
+            color: rgba(168, 179, 214, .85);
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .kbd {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            background: rgba(255, 255, 255, .05);
+            border: 1px solid var(--border);
+            padding: 2px 6px;
+            border-radius: 8px;
+            color: rgba(232, 238, 252, .9);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app" role="application" aria-label="To-do list">
+        <header>
+            <div class="title">
+                <h1>To-Do List</h1>
+                <p class="subtitle">Add tasks, mark them complete, filter by status, and everything saves automatically.
+                </p>
+            </div>
+            <div class="stats" aria-live="polite">
+                <div><span id="activeCount">0</span> active</div>
+                <div><span id="doneCount">0</span> completed</div>
+            </div>
+        </header>
+
+        <main>
+            <div class="add">
+                <input id="taskInput" class="input" type="text" placeholder="What do you need to do?" maxlength="200" />
+                <button id="addBtn" class="btn" type="button">Add</button>
+            </div>
+
+            <div class="toolbar">
+                <div class="filters" role="group" aria-label="Filters">
+                    <div class="chip" role="button" tabindex="0" data-filter="all" aria-pressed="true">All</div>
+                    <div class="chip" role="button" tabindex="0" data-filter="active" aria-pressed="false">Active</div>
+                    <div class="chip" role="button" tabindex="0" data-filter="done" aria-pressed="false">Completed</div>
+                </div>
+
+                <button id="clearDoneBtn" class="btn" type="button"
+                    style="background: rgba(255,255,255,.03); border-color: rgba(251,113,133,.35); color:#ffd1dc;"
+                    title="Remove all completed tasks">
+                    Clear completed
+                </button>
+            </div>
+
+            <ul id="list" class="list" aria-label="Task list"></ul>
+
+            <div id="emptyState" class="empty" hidden>
+                No tasks here yet. Add one above.
+            </div>
+        </main>
+
+        <footer>
+            <div>Tip: Press <span class="kbd">Enter</span> to add a task.</div>
+            <div>Stored in your browser (localStorage).</div>
+        </footer>
+    </div>
+
+    <script>
+        (() => {
+            const STORAGE_KEY = 'todo.items.v1';
+
+            /** @type {{id:string, text:string, done:boolean, createdAt:number}[]} */
+            let items = [];
+            let filter = 'all'; // all | active | done
+
+            const els = {
+                taskInput: document.getElementById('taskInput'),
+                addBtn: document.getElementById('addBtn'),
+                list: document.getElementById('list'),
+                emptyState: document.getElementById('emptyState'),
+                activeCount: document.getElementById('activeCount'),
+                doneCount: document.getElementById('doneCount'),
+                clearDoneBtn: document.getElementById('clearDoneBtn'),
+                filterChips: Array.from(document.querySelectorAll('.chip[data-filter]'))
+            };
+
+            function uid() {
+                // Simple, unique-enough id for local app
+                return Math.random().toString(16).slice(2) + '-' + Date.now().toString(16);
+            }
+
+            function formatTime(ts) {
+                const d = new Date(ts);
+                return d.toLocaleString(undefined, {
+                    year: 'numeric',
+                    month: 'short',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+
+            function load() {
+                try {
+                    const raw = localStorage.getItem(STORAGE_KEY);
+                    if (!raw) return;
+                    const parsed = JSON.parse(raw);
+                    if (!Array.isArray(parsed)) return;
+                    items = parsed
+                        .filter(x => x && typeof x.id === 'string')
+                        .map(x => ({
+                            id: x.id,
+                            text: String(x.text ?? ''),
+                            done: Boolean(x.done),
+                            createdAt: Number(x.createdAt ?? Date.now())
+                        }))
+                        .filter(x => x.text.trim().length > 0);
+                } catch (_) {
+                    // ignore
+                }
+            }
+
+            function save() {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+            }
+
+            function setFilter(next) {
+                filter = next;
+                els.filterChips.forEach(chip => {
+                    const pressed = chip.dataset.filter === next;
+                    chip.setAttribute('aria-pressed', pressed ? 'true' : 'false');
+                });
+                render();
+            }
+
+            function getFiltered() {
+                if (filter === 'active') return items.filter(x => !x.done);
+                if (filter === 'done') return items.filter(x => x.done);
+                return items;
+            }
+
+            function updateCounts() {
+                const active = items.filter(x => !x.done).length;
+                const done = items.filter(x => x.done).length;
+                els.activeCount.textContent = String(active);
+                els.doneCount.textContent = String(done);
+            }
+
+            function render() {
+                updateCounts();
+
+                const view = getFiltered();
+                els.list.innerHTML = '';
+
+                els.emptyState.hidden = view.length !== 0;
+
+                // Newest first
+                const sorted = [...view].sort((a, b) => b.createdAt - a.createdAt);
+
+                for (const it of sorted) {
+                    const li = document.createElement('li');
+                    li.className = 'item';
+                    li.dataset.id = it.id;
+
+                    const check = document.createElement('div');
+                    check.className = 'check';
+                    check.dataset.done = it.done ? 'true' : 'false';
+                    check.setAttribute('role', 'button');
+                    check.setAttribute('tabindex', '0');
+                    check.setAttribute('aria-label', it.done ? 'Mark as not completed' : 'Mark as completed');
+
+                    check.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M6.6 11.2 3.4 8l1.1-1.1 2.1 2.1 5.0-5.0 1.1 1.1-6.1 6.1Z" fill="#34d399"/>
+            </svg>
+          `;
+
+                    const textWrap = document.createElement('div');
+                    textWrap.className = 'text';
+
+                    const task = document.createElement('div');
+                    task.className = 'task' + (it.done ? ' done' : '');
+                    task.textContent = it.text;
+
+                    const meta = document.createElement('div');
+                    meta.className = 'meta';
+                    meta.textContent = it.done ? `Completed • ${formatTime(it.createdAt)}` : `Added • ${formatTime(it.createdAt)}`;
+
+                    textWrap.appendChild(task);
+                    textWrap.appendChild(meta);
+
+                    const actions = document.createElement('div');
+                    actions.className = 'actions';
+
+                    const delBtn = document.createElement('div');
+                    delBtn.className = 'icon-btn delete';
+                    delBtn.setAttribute('role', 'button');
+                    delBtn.setAttribute('tabindex', '0');
+                    delBtn.setAttribute('aria-label', 'Delete task');
+                    delBtn.title = 'Delete';
+                    delBtn.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M9 3h6l1 2h5v2H3V5h5l1-2Zm1 6h2v10h-2V9Zm4 0h2v10h-2V9Z" fill="currentColor"/>
+            </svg>
+          `;
+
+                    check.addEventListener('click', () => toggleDone(it.id));
+                    check.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            toggleDone(it.id);
+                        }
+                    });
+
+                    delBtn.addEventListener('click', () => removeItem(it.id));
+                    delBtn.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            removeItem(it.id);
+                        }
+                    });
+
+                    actions.appendChild(delBtn);
+
+                    li.appendChild(check);
+                    li.appendChild(textWrap);
+                    li.appendChild(actions);
+
+                    els.list.appendChild(li);
+                }
+            }
+
+            function addTask(text) {
+                const t = String(text).trim();
+                if (!t) return;
+
+                const newItem = {
+                    id: uid(),
+                    text: t,
+                    done: false,
+                    createdAt: Date.now()
+                };
+
+                items.push(newItem);
+                save();
+                render();
+            }
+
+            function toggleDone(id) {
+                items = items.map(x => x.id === id ? { ...x, done: !x.done } : x);
+                save();
+                render();
+            }
+
+            function removeItem(id) {
+                items = items.filter(x => x.id !== id);
+                save();
+                render();
+            }
+
+            function clearCompleted() {
+                items = items.filter(x => !x.done);
+                save();
+                render();
+            }
+
+            // Events
+            els.addBtn.addEventListener('click', () => {
+                addTask(els.taskInput.value);
+                els.taskInput.value = '';
+                els.taskInput.focus();
+            });
+
+            els.taskInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    els.addBtn.click();
+                }
+            });
+
+            els.clearDoneBtn.addEventListener('click', () => clearCompleted());
+
+            els.filterChips.forEach(chip => {
+                const next = chip.dataset.filter;
+                chip.addEventListener('click', () => setFilter(next));
+                chip.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setFilter(next);
+                    }
+                });
+            });
+
+            // Init
+            load();
+            // Ensure filter chips correct state
+            setFilter('all');
+        })();
+    </script>
+</body>
+
+</html>
